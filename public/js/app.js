@@ -1914,21 +1914,92 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
-      search: '',
       items: [],
-      value: []
+      value: [],
+      Listescommunes: [],
+      search: null,
+      loading: false,
+      title: '',
+      name: '',
+      position: {},
+      ready: false,
+      weather: {},
+      urlApi: 'http://api.weatherstack.com/current?access_key=ff48c3f13b59be8c8b6ce490d365878c&query='
     };
   },
+  watch: {
+    search: function search(val) {
+      var _this = this;
+
+      if (val && val.length > 2) {
+        this.loading = true;
+        setTimeout(function () {
+          _this.items = _this.Listescommunes.filter(function (commune) {
+            var _commune = commune.nom || '';
+
+            var _communeLowerCase = _commune.toLowerCase();
+
+            var _searchValueLowerCase = val.toLowerCase();
+
+            return _communeLowerCase.indexOf(_searchValueLowerCase) != -1;
+          });
+          _this.loading = false;
+        }, 500);
+      }
+    }
+  },
   mounted: function mounted() {
-    var _this = this;
+    var _this2 = this;
 
     axios__WEBPACK_IMPORTED_MODULE_0___default.a.get("https://geo.api.gouv.fr/departements/974/communes?fields=nom,code,codesPostaux,codeDepartement,codeRegion,population&format=json&geometry=centre").then(function (response) {
-      //console.log(response)
       response.data.forEach(function (_data) {
-        _this.items.push(_data.nom + ' ( ' + _data.code + ' )');
+        _this2.items.push(_data);
       });
-      console.log(_this.items);
     });
+  },
+  methods: {
+    getWeather: function getWeather(value) {
+      var _this3 = this;
+
+      this.title = value.nom;
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get("http://api.weatherstack.com/current?access_key=ff48c3f13b59be8c8b6ce490d365878c&query=" + value.nom).then(function (response) {
+        _this3.weather = response.data;
+        _this3.ready = true;
+        var d = new Date(_this3.weather.location.observation_time);
+        var options = {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+        _this3.weather.location.observation_time = d.toLocaleDateString("fr-Fr", options);
+      });
+    },
+    getCurrentPosition: function getCurrentPosition() {
+      var _this4 = this;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          _this4.position = position.coords;
+          axios__WEBPACK_IMPORTED_MODULE_0___default.a.get(_this4.urlApi + _this4.position.latitude + ',' + _this4.position.longitude).then(function (response) {
+            _this4.weather = response.data;
+            _this4.ready = true;
+            console.log(_this4.position = position.coords);
+            var d = new Date(_this4.weather.location.observation_time);
+            var options = {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            };
+            _this4.weather.location.observation_time = d.toLocaleDateString("fr-Fr", options);
+          });
+        });
+      }
+    }
+  },
+  created: function created() {
+    this.getCurrentPosition();
   }
 });
 
@@ -20149,12 +20220,32 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c(
-    "v-card",
-    { staticClass: "pa-5" },
+    "v-col",
+    { attrs: { cols: "12", sm: "12", md: "12" } },
     [
       _c("v-autocomplete", {
         staticClass: "pa-5",
-        attrs: { items: _vm.items, label: "Meteo" },
+        attrs: {
+          "item-text": "nom",
+          items: _vm.items,
+          label: "Communes",
+          "search-input": _vm.search,
+          loading: _vm.loading,
+          "cache-items": "",
+          "return-object": "",
+          "hide-no-data": ""
+        },
+        on: {
+          "update:searchInput": function($event) {
+            _vm.search = $event
+          },
+          "update:search-input": function($event) {
+            _vm.search = $event
+          },
+          change: function($event) {
+            return _vm.getWeather(_vm.value)
+          }
+        },
         model: {
           value: _vm.value,
           callback: function($$v) {
@@ -20162,7 +20253,112 @@ var render = function() {
           },
           expression: "value"
         }
-      })
+      }),
+      _vm._v(" "),
+      _vm.ready
+        ? _c(
+            "v-card",
+            { staticClass: "mb-10", attrs: { "max-width": "400" } },
+            [
+              _c(
+                "v-list-item",
+                { attrs: { "two-line": "" } },
+                [
+                  _c(
+                    "v-list-item-content",
+                    [
+                      _c("v-list-item-title", { staticClass: "headline" }, [
+                        _vm._v(_vm._s(_vm.title))
+                      ]),
+                      _vm._v(" "),
+                      _c("v-list-item-subtitle", [
+                        _vm._v(_vm._s(_vm.weather.current.observation_time))
+                      ])
+                    ],
+                    1
+                  )
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "v-card-text",
+                [
+                  _c(
+                    "v-row",
+                    { attrs: { align: "center" } },
+                    [
+                      _c(
+                        "v-col",
+                        { staticClass: "display-3", attrs: { cols: "6" } },
+                        [_vm._v(_vm._s(_vm.weather.current.temperature) + "°C")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-col",
+                        { attrs: { cols: "6" } },
+                        [
+                          _c("v-img", {
+                            attrs: {
+                              src:
+                                "https://cdn.vuetifyjs.com/images/cards/sun.png",
+                              alt: "Sunny image",
+                              width: "92"
+                            }
+                          })
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "v-list-item",
+                [
+                  _c(
+                    "v-list-item-icon",
+                    [_c("v-icon", [_vm._v("mdi-send")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c("v-list-item-subtitle", [
+                    _vm._v(
+                      "Vent moyen : " +
+                        _vm._s(_vm.weather.current.wind_speed) +
+                        " km/h"
+                    )
+                  ])
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "v-list-item",
+                [
+                  _c(
+                    "v-list-item-icon",
+                    [_c("v-icon", [_vm._v("mdi-cloud-download")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c("v-list-item-subtitle", [
+                    _vm._v(
+                      "Préssion atmosphérique: " +
+                        _vm._s(_vm.weather.current.pressure) +
+                        " hpm"
+                    )
+                  ])
+                ],
+                1
+              )
+            ],
+            1
+          )
+        : _vm._e()
     ],
     1
   )

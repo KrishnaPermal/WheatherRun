@@ -45,8 +45,8 @@ body {
 .sidebar {
   margin: 0;
   padding: 0;
-  width: 200px;
-  background-color: #c5a9e9;
+  width: 400px;
+  background-color: #458d8d;
   position: fixed;
   height: 100%;
   overflow: auto;

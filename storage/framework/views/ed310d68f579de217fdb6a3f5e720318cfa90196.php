@@ -13,8 +13,6 @@
           <h1 class="display-4 text-center">WeatherRun</h1>
           <p class="lead text-center">Bienvenue</p>
       </div>
-  
-  
 </body>
 </html>
 
